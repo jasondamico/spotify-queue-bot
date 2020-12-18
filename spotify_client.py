@@ -25,8 +25,10 @@ class SpotifyAPI(oauth2.SpotifyAPIOAuth2):
 
         :return: A dictionary to be passed to the post function when retreiving resources from the API.
         """
+        token = self.get_access_token("client_credentials")
+
         headers = {
-            "Authorization": f"Bearer {self.get_access_token()}"
+            "Authorization": f"Bearer {token}"
         }
         
         return headers

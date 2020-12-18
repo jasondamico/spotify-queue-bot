@@ -58,13 +58,19 @@ class SpotifyAPIOAuth2(object):
             "grant_type": "client_credentials"
         }
         
-    def perform_auth(self):     
+    def perform_auth(self, auth_type):     
         """ 
         Performs the authentication of the the client application based on the stored client id and client key. Returns TRUE if the authentication was successful, throws an exception otherwise.
 
+        :param auth_type: A string representing which type of authentication should be performed. One possible options is available at this time:
+            - `"client_credentials"`
         :return: TRUE if the authentication was successful.
         """   
-        r = requests.post(self.token_url, data=self.get_token_data(), headers=self.get_token_headers())
+        if auth_type == "client_credentials":
+            r = requests.post(self.token_url, data=self.get_token_data(), headers=self.get_token_headers())
+        else:
+            raise Exception("Invalid authorization flow entered.")
+
         valid_request = r.status_code in range(200, 299)
 
         if valid_request:
@@ -79,15 +85,16 @@ class SpotifyAPIOAuth2(object):
         else:
             raise Exception("Could not authenticate client.")
         
-    def get_access_token(self):
+    def get_access_token(self, auth_type):
         """
         Returns the valid authentication token stored within the object.
 
+        :param auth_type: A string representing which type of authentication should be performed.
         :return: A valid authentication token that is presently stored within the object.
         """
         token = self.access_token
         
-        auth_done = self.perform_auth()
+        auth_done = self.perform_auth(auth_type)
         
         if not auth_done:
             raise Exception("Authentication failed")
@@ -95,7 +102,7 @@ class SpotifyAPIOAuth2(object):
         now = datetime.datetime.now()
         
         if self.access_token_expires < now or token == None:
-            self.perform_auth()
-            return self.get_access_token()
+            self.perform_auth(auth_type)
+            return self.get_access_token(auth_type)
         
         return token
