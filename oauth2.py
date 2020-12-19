@@ -1,16 +1,22 @@
 import base64
 import datetime
 from urllib.parse import urlencode
+import webbrowser
+import urllib.parse as urllibparse
+from urllib.parse import parse_qs
 
 import requests
 
 class SpotifyAPIOAuth2(object):
     access_token = None
     access_token_expires = None
+    auth_code = None
+    redirect_uri = "http://jasondamico.me"
     access_token_did_expire = True
     client_id = None
     client_secret = None
     token_url = "https://accounts.spotify.com/api/token"
+    auth_code_url = "https://accounts.spotify.com/authorize"
     
     def __init__(self, client_id, client_secret, *args, **kwargs):
         """
@@ -48,26 +54,37 @@ class SpotifyAPIOAuth2(object):
             "Authorization": f"Basic {client_creds_b64}"
         }
     
-    def get_token_data(self, auth_code=False):
+    def get_token_data(self, auth_type):
         """
         Returns a dictionary containing the token data to be used in the post request to receive the client token URL.
 
         :return: The data to be used to make a request to retreive the token associated with this application.
         """
-        return {
-            "grant_type": "client_credentials"
+        data = {
+            "grant_type": auth_type
         }
+
+        if auth_type == "authorization_code":
+            data["code"] = self.auth_code
+            data["redirect_uri"] = self.redirect_uri
+
+        return data
         
     def perform_auth(self, auth_type):     
         """ 
         Performs the authentication of the the client application based on the stored client id and client key. Returns TRUE if the authentication was successful, throws an exception otherwise.
 
-        :param auth_type: A string representing which type of authentication should be performed. One possible options is available at this time:
+        :param auth_type: A string representing which type of authentication should be performed. Two possible options are available at this time:
             - `"client_credentials"`
+            - `"authorization_code"`
         :return: TRUE if the authentication was successful.
         """   
         if auth_type == "client_credentials":
-            r = requests.post(self.token_url, data=self.get_token_data(), headers=self.get_token_headers())
+            r = requests.post(self.token_url, data=self.get_token_data("client_credentials"), headers=self.get_token_headers())
+        elif auth_type == "authorization_code":
+            self.store_auth_code()
+
+            r = requests.post(self.token_url, data=self.get_token_data("authorization_code"), headers=self.get_token_headers())
         else:
             raise Exception("Invalid authorization flow entered.")
 
@@ -92,9 +109,9 @@ class SpotifyAPIOAuth2(object):
         :param auth_type: A string representing which type of authentication should be performed.
         :return: A valid authentication token that is presently stored within the object.
         """
-        token = self.access_token
-        
         auth_done = self.perform_auth(auth_type)
+
+        token = self.access_token
         
         if not auth_done:
             raise Exception("Authentication failed")
@@ -106,3 +123,41 @@ class SpotifyAPIOAuth2(object):
             return self.get_access_token(auth_type)
         
         return token
+
+    def get_auth_code_params(self):
+        """
+        Returns a dictionary containing the parameters to be used in obtaining the authorization code.
+
+        :return: The parameters to be passed to the authorization code URL to obtain a user authorization code.
+        """
+        return {
+            "client_id": self.client_id,
+            "response_type": "code",
+            "redirect_uri": self.redirect_uri,
+            "scope": "user-modify-playback-state",
+            "state": 123
+        }
+
+    def store_auth_code(self):
+        """
+        Obtains (with the consent of the user) a user authorization code and stores it as an instance variable.
+
+        :return: The authorization code obtained from the user.
+        """
+        url_params = urllibparse.urlencode(self.get_auth_code_params())
+        auth_code_url = "%s?%s" % (self.auth_code_url, url_params)
+
+        webbrowser.open(auth_code_url)
+        uri = input("Please enter the URL you were redirected to: ")
+
+        self.auth_code = self.get_code_from_uri(uri)
+
+    def get_code_from_uri(self, uri):
+        """
+        Retrieves the code from the passed URI and returns the value.
+
+        :return: The code stored within the passed URI.
+        """
+        parsed = urllibparse.urlparse(uri)
+
+        return parse_qs(parsed.query)["code"][0]

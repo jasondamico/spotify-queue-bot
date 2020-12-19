@@ -122,3 +122,40 @@ class SpotifyAPI(oauth2.SpotifyAPIOAuth2):
         query_params = urlencode(query_params)
         
         return self.base_search(query_params)
+
+    def get_queue_headers(self):
+        """
+        Returns a dictionary holding the header values to be used in a query to add a track to the user's queue.
+
+        :return: The headers arguments to be used when making a request to add to a user's queue.
+        """
+        token = self.get_access_token("authorization_code")
+
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+
+        return headers
+
+    def get_queue_params(self, uri):
+        """
+        Returns a dictionary holding the paramater values to be used in a query to add a track with the passed URI to the user's queue.
+
+        :param uri: The URI of a track to be added to the user's queue.
+        :return: The params arguments to be used when making a request to add to a user's queue.
+        """
+        return {
+            "uri": uri
+        }
+
+    def add_to_queue(self, uri):
+        """
+        Adds the track held at the passed URI to the user queue.
+
+        :param uri: The URI of a track to be added to the user's queue.
+        """
+        endpoint = "https://api.spotify.com/v1/me/player/queue"
+        params = self.get_queue_params(uri)
+        headers = self.get_queue_headers()
+
+        r = requests.post(endpoint, params=params, headers=headers)
