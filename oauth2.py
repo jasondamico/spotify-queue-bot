@@ -24,7 +24,6 @@ class SpotifyAPIOAuth2(object):
 
         :param client_id: The id associated with the registered Spotify application.
         :param client_secret: The secret key associated with the registered Spotify application.
-        :param redirect_uri: The URI which the Spotify client authentication service should redirect the user to after authenticating.
         """
         super().__init__(*args, **kwargs)
         self.client_id = client_id
@@ -62,11 +61,11 @@ class SpotifyAPIOAuth2(object):
         :return: The data to be used to make a request to retreive the token associated with this application.
         """
         data = {
-            "grant_type": "client_credentials"
+            "grant_type": auth_type
         }
 
         if auth_type == "authorization_code":
-            data["code"] = self.auth_code,
+            data["code"] = self.auth_code
             data["redirect_uri"] = self.redirect_uri
 
         return data
@@ -110,9 +109,9 @@ class SpotifyAPIOAuth2(object):
         :param auth_type: A string representing which type of authentication should be performed.
         :return: A valid authentication token that is presently stored within the object.
         """
-        token = self.access_token
-        
         auth_done = self.perform_auth(auth_type)
+
+        token = self.access_token
         
         if not auth_done:
             raise Exception("Authentication failed")
