@@ -83,7 +83,7 @@ class SpotifyAPIOAuth2(object):
         if auth_type == "client_credentials":
             r = requests.post(self.token_url, data=self.get_token_data("client_credentials"), headers=self.get_token_headers())
         elif auth_type == "authorization_code":
-            auth_code = self.get_auth_code()
+            self.store_auth_code()
 
             r = requests.post(self.token_url, data=self.get_token_data("authorization_code"), headers=self.get_token_headers())
         else:
@@ -139,9 +139,9 @@ class SpotifyAPIOAuth2(object):
             "state": 123
         }
 
-    def get_auth_code(self):
+    def store_auth_code(self):
         """
-        Obtains and returns a user authorization code (with the consent of the user).
+        Obtains (with the consent of the user) a user authorization code and stores it as an instance variable.
 
         :return: The authorization code obtained from the user.
         """
@@ -151,7 +151,7 @@ class SpotifyAPIOAuth2(object):
         webbrowser.open(auth_code_url)
         uri = input("Please enter the URL you were redirected to: ")
 
-        return self.get_code_from_uri(uri)
+        self.auth_code = self.get_code_from_uri(uri)
 
     def get_code_from_uri(self, uri):
         """
