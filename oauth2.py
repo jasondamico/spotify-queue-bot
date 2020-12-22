@@ -11,6 +11,7 @@ class SpotifyAPIOAuth2(object):
     access_token = None
     access_token_expires = None
     auth_code = None
+    refresh_token = None
     redirect_uri = "http://jasondamico.me"
     access_token_did_expire = True
     client_id = None
@@ -100,6 +101,9 @@ class SpotifyAPIOAuth2(object):
             expires_in = data["expires_in"]  # seconds
             self.access_token_expires = now + datetime.timedelta(seconds=expires_in)
             self.access_token_did_expire = self.access_token_expires < now
+
+            if auth_type == "authorization_code":
+                self.refresh_token = data["refresh_token"] 
             
             return True
         else:
@@ -112,20 +116,49 @@ class SpotifyAPIOAuth2(object):
         :param auth_type: A string representing which type of authentication should be performed.
         :return: A valid authentication token that is presently stored within the object.
         """
+        now = datetime.datetime.now()
+
+        if auth_type == "authorization_code" and self.access_token_expires and self.access_token_expires < now:
+            self.perform_token_refresh()
+            return self.get_access_token(auth_type)
+
         auth_done = self.perform_auth(auth_type)
 
         token = self.access_token
         
         if not auth_done:
             raise Exception("Authentication failed")
-        
-        now = datetime.datetime.now()
-        
+
         if self.access_token_expires < now or token == None:
             self.perform_auth(auth_type)
             return self.get_access_token(auth_type)
         
         return token
+
+    def get_refresh_token_data(self):
+        """
+        Returns a dictionary containing the data to be used in a post request to refresh the held access token.
+
+        :return: The data to be passed to the `data` keyword when refreshing the access token.
+        """
+        return {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token
+        }
+
+    def perform_token_refresh(self):
+        """
+        Refreshes the stored access token 
+        """
+        data = self.get_refresh_token_data()
+        headers = self.get_token_headers()
+
+        now = datetime.datetime.now()
+
+        r = requests.post(self.token_url, data=data, headers=headers)
+        self.access_token = r.json()["access_token"]
+        expires_in = r.json()["expires_in"]  # seconds
+        self.access_token_expires = now + datetime.timedelta(seconds=expires_in)
 
     def get_auth_code_params(self):
         """
