@@ -159,3 +159,15 @@ class SpotifyAPI(oauth2.SpotifyAPIOAuth2):
         headers = self.get_queue_headers()
 
         r = requests.post(endpoint, params=params, headers=headers)
+        
+        valid_request = r.status_code in range(200, 299)
+
+        if not valid_request:
+            error_code = r.status_code
+
+            reason = r.reason
+
+            if error_code == 404:
+                reason = "Connection not made, please launch your Spotify application"
+
+            print("%d ERROR: %s" % (error_code, reason))
