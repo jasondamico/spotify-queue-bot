@@ -82,9 +82,12 @@ class SpotifyAPIOAuth2(object):
         if auth_type == "client_credentials":
             r = requests.post(self.token_url, data=self.get_token_data("client_credentials"), headers=self.get_token_headers())
         elif auth_type == "authorization_code":
-            self.store_auth_code()
+            if self.auth_code == None:
+                self.store_auth_code()
 
-            r = requests.post(self.token_url, data=self.get_token_data("authorization_code"), headers=self.get_token_headers())
+                r = requests.post(self.token_url, data=self.get_token_data("authorization_code"), headers=self.get_token_headers())
+            else:
+                return True
         else:
             raise Exception("Invalid authorization flow entered.")
 
