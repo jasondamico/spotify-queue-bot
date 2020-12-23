@@ -23,14 +23,17 @@ class QueueBot():
         self.active = True
 
         while self.active:
-            query = input("Enter the name of the track you would like to add to your queue: ")
-            query = self.__process_queue_query(query)
+            raw_query = input("Enter the name of the track you would like to add to your queue: ")
+            query = self.__process_queue_query(raw_query)
             
             if self.active:
                 tracks = self.spotify.search(query, search_type="track")
-                track_uri = self.spotify.get_first_track_uri(tracks)
+                try:
+                    track_uri = self.spotify.get_first_track_uri(tracks)
 
-                self.spotify.add_to_queue(track_uri)
+                    self.spotify.add_to_queue(track_uri)
+                except IndexError:
+                    print("No tracks returned for \'%s\'." % raw_query)
 
     def __process_queue_query(self, query):
         """
