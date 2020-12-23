@@ -171,3 +171,12 @@ class SpotifyAPI(oauth2.SpotifyAPIOAuth2):
                 reason = "Connection not made, please launch your Spotify application"
 
             print("%d ERROR: %s" % (error_code, reason))
+
+    def get_first_track_uri(self, track_search_json):
+        """
+        Returns the URI of the first track stored in the passed JSON object returned from a track search query.
+
+        :param track_search_json: The JSON object returned from a track search.
+        :return: The URI of the first track held in the passed JSON object.
+        """
+        return track_search_json["tracks"]["items"][0]["uri"]
