@@ -23,17 +23,28 @@ class QueueBot():
         self.active = True
 
         while self.active:
-            raw_query = input("Enter the name of the track you would like to add to your queue: ")
+            raw_query = input("Enter the name of the item you would like to add to your queue: ")
             query = self.__process_queue_query(raw_query)
             
             if self.active:
-                tracks = self.spotify.search(query, search_type="track")
-                try:
-                    track_uri = self.spotify.get_first_track_uri(tracks)
+                if self.__has_album_flag(raw_query):
+                    search_type = "album"
+                else:
+                    search_type = "track"
 
-                    self.spotify.add_to_queue(track_uri)
+                results = self.spotify.search(query, search_type=search_type)
+
+                try:
+                    if search_type == "track":
+                        track_uri = self.spotify.get_first_track_uri(results)
+
+                        self.spotify.add_to_queue(track_uri)
+                    else:
+                        album_id = self.spotify.get_first_album_id(results)
+
+                        self.spotify.add_album_to_queue(album_id)
                 except IndexError:
-                    print("No tracks returned for \'%s\'." % raw_query)
+                    print("No results returned for \'%s\'." % raw_query)
 
     def __process_queue_query(self, query):
         """
@@ -44,5 +55,13 @@ class QueueBot():
         """
         if query == "-quit":
             self.active = False
+        elif self.__has_album_flag(query):
+            return query.replace("-album", "")
         else:
             return query
+
+    def __has_album_flag(self, query):
+        """
+        Returns a boolean corresponding to whether or not the passed query has an album flag (-album), corresponding to a wish for an entire album to be queued.
+        """
+        return "-album" in query
