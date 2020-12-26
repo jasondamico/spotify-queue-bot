@@ -23,7 +23,7 @@ class QueueBot():
         self.active = True
 
         while self.active:
-            raw_query = input("Enter the name of the track you would like to add to your queue: ")
+            raw_query = input("Enter the name of the item you would like to add to your queue: ")
             query = self.__process_queue_query(raw_query)
             
             if self.active:
@@ -44,7 +44,7 @@ class QueueBot():
 
                         self.spotify.add_album_to_queue(album_id)
                 except IndexError:
-                    print("No tracks returned for \'%s\'." % raw_query)
+                    print("No results returned for \'%s\'." % raw_query)
 
     def __process_queue_query(self, query):
         """
