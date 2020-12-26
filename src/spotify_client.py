@@ -180,3 +180,25 @@ class SpotifyAPI(oauth2.SpotifyAPIOAuth2):
         :return: The URI of the first track held in the passed JSON object.
         """
         return track_search_json["tracks"]["items"][0]["uri"]
+
+    def get_first_album_id(self, album_search_json):
+        """
+        Returns the ID of the of the first album stored in the passed JSON object returned from an album search query.
+
+        :param album_search_json: The JSON object returned from an album search.
+        :return: The ID of the first album object held in the passed JSON object.
+        """
+        return album_search_json["albums"]["items"][0]["id"]
+
+    def add_album_to_queue(self, album_id):
+        """
+        Adds the album held at the passed ID to the user queue.
+
+        :param album_id: The ID of the album to be added to the user queue.
+        """
+        album = self.get_album(album_id)
+        tracks = album["tracks"]["items"]
+
+        for track in tracks:
+            uri = track["uri"]
+            self.add_to_queue(uri)
