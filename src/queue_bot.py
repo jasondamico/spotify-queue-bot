@@ -44,5 +44,13 @@ class QueueBot():
         """
         if query == "-quit":
             self.active = False
+        elif self.__has_album_flag(query):
+            return query.replace("-album", "")
         else:
             return query
+
+    def __has_album_flag(self, query):
+        """
+        Returns a boolean corresponding to whether or not the passed query has an album flag (-album), corresponding to a wish for an entire album to be queued.
+        """
+        return "-album" in query
